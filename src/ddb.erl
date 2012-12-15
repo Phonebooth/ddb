@@ -438,8 +438,10 @@ format_update_cond({'exists', Name, Value, Type}) ->
 
 type('string') -> <<"S">>;
 type('number') -> <<"N">>;
+type('binary') -> <<"B">>;
 type(['string']) -> <<"SS">>;
-type(['number']) -> <<"NN">>.
+type(['number']) -> <<"NN">>;
+type(['binary']) -> <<"BB">>.
 
 -spec returns(returns()) -> binary().
 
