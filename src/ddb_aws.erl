@@ -25,6 +25,8 @@
 
 -export([retry/3, timestamp/0]).
 
+-include("../../../bwslib/include/bwslib.hrl").
+
 -define(DATE_FMT, "~4.10.0b-~2.10.0b-~2.10.0bT~2.10.0b:~2.10.0b:~2.10.0b.000Z").
 
 -spec retry(function(), non_neg_integer(), function()) -> {'ok', _} | {'error', _}.

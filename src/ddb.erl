@@ -37,6 +37,8 @@
 	 scan/2, scan/3,
 	 range_key_condition/1]).
 
+-include("../../../bwslib/include/bwslib.hrl").
+
 -define(DDB_DOMAIN, "dynamodb.us-east-1.amazonaws.com").
 -define(DDB_ENDPOINT, "https://" ++ ?DDB_DOMAIN ++ "/").
 -define(DDB_AMZ_PREFIX, "x-amz-").

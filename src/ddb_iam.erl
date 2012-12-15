@@ -25,7 +25,7 @@
 
 -export([credentials/2, token/1]).
 
--include_lib("ibrowse/include/ibrowse.hrl").
+-include("../../ibrowse/src/ibrowse.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
 -define(IAM_ENDPOINT, "https://sts.amazonaws.com/").
