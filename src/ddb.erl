@@ -170,7 +170,7 @@ describe_table(Name)
 
 %%% Update table. 
 
--spec update_table(tablename()) -> json_reply().
+-spec update_table(tablename(), pos_integer(), pos_integer()) -> json_reply().
 
 update_table(Name, ReadsPerSec, WritesPerSec)
   when is_binary(Name),
