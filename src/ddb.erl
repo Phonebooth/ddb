@@ -172,7 +172,7 @@ describe_table(Name)
 
 -spec update_table(tablename()) -> json_reply().
 
-update_table(Name, ReadsPerSec, WritesPerSec) ->
+update_table(Name, ReadsPerSec, WritesPerSec)
   when is_binary(Name),
        is_integer(ReadsPerSec),
        is_integer(WritesPerSec) ->
