@@ -26,10 +26,11 @@
 -export([credentials/3, tables/0,
          key_type/2, key_type/4,
          key_value/2, key_value/4,
-         create_table/4, describe_table/1, remove_table/1,
+         create_table/4, describe_table/1, 
+         update_table/3, remove_table/1,
          get/2, get/3, put/2, update/3, update/4, 
          delete/2, delete/3, 
-	 cond_put/3,
+         cond_put/3,
          cond_update/4, cond_update/5,
          cond_delete/3, cond_delete/4,
          now/0, find/3, find/4,
@@ -62,6 +63,7 @@
 -define(TG_VERSION, "DynamoDB_20111205.").
 -define(TG_CREATE_TABLE, ?TG_VERSION ++ "CreateTable").
 -define(TG_LIST_TABLES, ?TG_VERSION ++ "ListTables").
+-define(TG_UPDATE_TABLE, ?TG_VERSION ++ "UpdateTable").
 -define(TG_DESCRIBE_TABLE, ?TG_VERSION ++ "DescribeTable").
 -define(TG_DELETE_TABLE, ?TG_VERSION ++ "DeleteTable").
 -define(TG_PUT_ITEM, ?TG_VERSION ++ "PutItem").
@@ -165,6 +167,19 @@ describe_table(Name)
   when is_binary(Name) ->
     JSON = [{<<"TableName">>, Name}],
     request(?TG_DESCRIBE_TABLE, JSON).
+
+%%% Update table. 
+
+-spec update_table(tablename()) -> json_reply().
+
+update_table(Name, ReadsPerSec, WritesPerSec) ->
+  when is_binary(Name),
+       is_integer(ReadsPerSec),
+       is_integer(WritesPerSec) ->
+    JSON = [{<<"TableName">>, Name},
+            {<<"ProvisionedThroughput">>, [{<<"ReadCapacityUnits">>, ReadsPerSec},
+                                           {<<"WriteCapacityUnits">>, WritesPerSec}]}],
+    request(?TG_UPDATE_TABLE, JSON).
 
 %%% Delete table.
 
