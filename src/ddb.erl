@@ -34,11 +34,10 @@
          cond_update/4, cond_update/5,
          cond_delete/3, cond_delete/4,
          now/0, find/3, find/4,
-	     q/3, q/4,
+	     q/3, q/4, 
+         batch_get/2, batch_key_value/2, 
 	     scan/2, scan/3,
 	     range_key_condition/1]).
-
--include("../../../bwslib/include/bwslib.hrl").
 
 -define(DDB_DOMAIN, "dynamodb.us-east-1.amazonaws.com").
 -define(DDB_ENDPOINT, "https://" ++ ?DDB_DOMAIN ++ "/").
@@ -346,6 +345,13 @@ batch_get(Name, KeyList)
                 [{Name, [{<<"Keys">>, KeyList}]}]}],
     request(?TG_BATCH_GET_ITEM, JSON).
 
+-spec batch_key_value(binary(), type()) -> json().
+
+batch_key_value(HashKeyValue, HashKeyType)
+  when is_binary(HashKeyValue),
+       is_atom(HashKeyType) ->
+    [{<<"HashKeyElement">>, [{type(HashKeyType), HashKeyValue}]}].
+
 %%% Fetch all item attributes from table using a condition.
 
 -spec find(tablename(), key_value(), find_cond()) -> json_reply().
@@ -490,7 +496,7 @@ update_action('delete') -> <<"DELETE">>.
 
 request(Target, JSON) ->
     Body = jsx:term_to_json(JSON),
-    ok = ?DEBUG("REQUEST BODY ~n~p", [Body]),
+    ok = lager:debug("REQUEST BODY ~n~p", [Body]),
     Headers = headers(Target, Body),
     Opts = [{'response_format', 'binary'}],
     F = fun() -> ibrowse:send_req(?DDB_ENDPOINT, [{'Content-type', ?CONTENT_TYPE} | Headers], 'post', Body, Opts) end,
