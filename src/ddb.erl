@@ -29,6 +29,7 @@
          create_table/4, describe_table/1, 
          update_table/3, remove_table/1,
          get/2, get/3, put/2, update/3, update/4, 
+         batch_get/2, batch_key_value/2,
          delete/2, delete/3, 
          cond_put/3,
          cond_update/4, cond_update/5,
@@ -222,6 +223,13 @@ key_value(HashKeyValue, HashKeyType)
        is_atom(HashKeyType) ->
     [{<<"Key">>, [{<<"HashKeyElement">>, 
                    [{type(HashKeyType), HashKeyValue}]}]}].
+
+-spec batch_key_value(binary(), type()) -> json().
+
+batch_key_value(HashKeyValue, HashKeyType)
+  when is_binary(HashKeyValue),
+       is_atom(HashKeyType) ->
+    [{<<"HashKeyElement">>, [{type(HashKeyType), HashKeyValue}]}].
 
 -spec key_value(binary(), type(), binary(), type()) -> json().
 
