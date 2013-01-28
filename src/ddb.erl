@@ -36,6 +36,7 @@
          now/0, find/3, find/4,
 	     q/3, q/4, 
          batch_get/2, batch_key_value/2, 
+         batch_put/2, 
 	     scan/2, scan/3,
 	     range_key_condition/1]).
 
@@ -66,6 +67,7 @@
 -define(TG_DESCRIBE_TABLE, ?TG_VERSION ++ "DescribeTable").
 -define(TG_DELETE_TABLE, ?TG_VERSION ++ "DeleteTable").
 -define(TG_PUT_ITEM, ?TG_VERSION ++ "PutItem").
+-define(TG_BATCH_PUT_ITEM, ?TG_VERSION ++ "BatchWriteItem").
 -define(TG_GET_ITEM, ?TG_VERSION ++ "GetItem").
 -define(TG_BATCH_GET_ITEM, ?TG_VERSION ++ "BatchGetItem").
 -define(TG_UPDATE_ITEM, ?TG_VERSION ++ "UpdateItem").
@@ -199,6 +201,20 @@ put(Name, Attributes)
     JSON = [{<<"TableName">>, Name},
             {<<"Item">>, format_put_attrs(Attributes)}],
     request(?TG_PUT_ITEM, JSON).
+
+-spec batch_put(tablename(), [[put_attr()]]) -> json_reply().
+
+batch_put(Name, Items) 
+    when is_binary(Name),
+         is_list(Items) ->
+    JSON = [{<<"RequestItems">>, 
+                [{Name, 
+                    [{<<"PutRequest">>, 
+                        [{<<"Item">>, format_put_attrs(A)} || A <- Items]
+                    }]
+                }]
+            }],
+    request(?TG_BATCH_PUT_ITEM, JSON).
 
 %%% Conditionally put item attributes into table
 
