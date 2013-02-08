@@ -36,7 +36,7 @@
          now/0, find/3, find/4,
 	     q/3, q/4, 
          batch_get/2, batch_key_value/2, 
-         batch_put/2, 
+         batch_put/2, batch_delete/2, 
 	     scan/2, scan/3,
 	     range_key_condition/1]).
 
@@ -72,6 +72,7 @@
 -define(TG_BATCH_GET_ITEM, ?TG_VERSION ++ "BatchGetItem").
 -define(TG_UPDATE_ITEM, ?TG_VERSION ++ "UpdateItem").
 -define(TG_DELETE_ITEM, ?TG_VERSION ++ "DeleteItem"). 
+-define(TG_BATCH_DELETE_ITEM, ?TG_VERSION ++ "BatchWriteItem").
 -define(TG_QUERY, ?TG_VERSION ++ "Query").
 -define(TG_SCAN, ?TG_VERSION ++ "Scan").
 
@@ -209,9 +210,9 @@ batch_put(Name, Items)
          is_list(Items) ->
     JSON = [{<<"RequestItems">>, 
                 [{Name, 
-                    [{<<"PutRequest">>, 
-                        [{<<"Item">>, format_put_attrs(A)} || A <- Items]
-                    }]
+                    [[{<<"PutRequest">>, 
+                        [{<<"Item">>, format_put_attrs(A)}]}] 
+                    || A <- Items]
                 }]
             }],
     request(?TG_BATCH_PUT_ITEM, JSON).
@@ -327,6 +328,19 @@ cond_delete(Name, Keys, Condition, Returns)
         ++ Keys 
         ++ format_update_cond(Condition),
     request(?TG_DELETE_ITEM, JSON).    
+
+-spec batch_delete(tablename(), [key_json()]) -> json_reply().
+
+batch_delete(Name, Keys) 
+    when is_binary(Name),
+         is_list(Keys) ->
+    JSON = [{<<"RequestItems">>, 
+                [{Name, 
+                    [[{<<"DeleteRequest">>, 
+                        [{<<"Key">>, K}]}] || K <- Keys]
+                }]
+            }],
+    request(?TG_BATCH_DELETE_ITEM, JSON).
     
 %%% Fetch all item attributes from table.
 
