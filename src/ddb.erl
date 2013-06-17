@@ -26,7 +26,7 @@
 -export([credentials/3, tables/0,
          key_type/2, key_type/4,
          key_value/2, key_value/4,
-         create_table/4, describe_table/1, 
+         create_table/5, create_table/6, describe_table/1, 
          update_table/3, remove_table/1,
          get/2, get/3, put/2, update/3, update/4, 
          delete/2, delete/3, 
@@ -34,11 +34,11 @@
          cond_update/4, cond_update/5,
          cond_delete/3, cond_delete/4,
          now/0, find/3, find/4,
-	     q/3, q/4, 
-         batch_get/2, batch_key_value/2, 
+	     q/4, q/5, q/7,
+         batch_get/2, batch_key_value/3, 
          batch_put/2, batch_delete/2, 
-	     scan/2, scan/3,
-	     range_key_condition/1]).
+	     scan/2, scan/3, batch_key_value/6,
+	     range_key_condition/1, secondary_index/3]).
 
 -define(DDB_DOMAIN, "dynamodb.us-east-1.amazonaws.com").
 -define(DDB_ENDPOINT, "https://" ++ ?DDB_DOMAIN ++ "/").
@@ -60,7 +60,7 @@
 
 %%% Endpoint targets
 
--define(TG_VERSION, "DynamoDB_20111205.").
+-define(TG_VERSION, "DynamoDB_20120810.").
 -define(TG_CREATE_TABLE, ?TG_VERSION ++ "CreateTable").
 -define(TG_LIST_TABLES, ?TG_VERSION ++ "ListTables").
 -define(TG_UPDATE_TABLE, ?TG_VERSION ++ "UpdateTable").
@@ -85,11 +85,13 @@
 -type find_cond() :: {condition(), type(), [_]}.
 -type json() :: [_].
 -type key_json() :: json().
+-type index_json() :: json().
 -type json_reply() :: {'ok', json()} | {'error', json()}.
 -type put_attr() :: {binary(), binary(), type()}.
 -type update_action() :: 'put' | 'add' | 'delete'.
 -type update_attr() :: {binary(), binary(), type(), 'put' | 'add'} | {binary(), 'delete'}.
 -type returns() :: 'none' | 'all_old' | 'updated_old' | 'all_new' | 'updated_new'.
+-type projection() :: 'keys_only' | 'include' | 'all'.
 -type update_cond() :: {'does_not_exist', binary()} | {'exists', binary(), binary(), type()}.
 -type json_parameter() :: {binary(), term()}.
 -type json_parameters() :: [json_parameter()].
@@ -120,9 +122,8 @@ credentials() ->
 key_type(HashKey, HashKeyType)
   when is_binary(HashKey),
        is_atom(HashKeyType) ->
-    [{<<"HashKeyElement">>, 
-      [{<<"AttributeName">>, HashKey},
-       {<<"AttributeType">>, type(HashKeyType)}]}].
+    [[{<<"AttributeName">>, HashKey},
+       {<<"KeyType">>, <<"HASH">>}]].
 
 -spec key_type(binary(), type(), binary(), type()) -> json().
 
@@ -131,24 +132,63 @@ key_type(HashKey, HashKeyType, RangeKey, RangeKeyType)
        is_atom(HashKeyType),
        is_binary(RangeKey),
        is_atom(RangeKeyType) ->
-    [{<<"HashKeyElement">>, 
-      [{<<"AttributeName">>, HashKey},
-       {<<"AttributeType">>, type(HashKeyType)}]},
-     {<<"RangeKeyElement">>, 
-      [{<<"AttributeName">>, RangeKey},
-       {<<"AttributeType">>, type(RangeKeyType)}]}].
+    [[{<<"AttributeName">>, HashKey},
+       {<<"KeyType">>, <<"HASH">>}],
+     [{<<"AttributeName">>, RangeKey},
+       {<<"KeyType">>, <<"RANGE">>}]].
+
+-spec secondary_index(binary(), key_json(), projection()) -> json(). 
+
+secondary_index(Name, Keys, Projection) 
+    when is_binary(Name), 
+         is_list(Keys),
+         is_atom(Projection) ->
+    [{<<"IndexName">>, Name}, 
+     {<<"KeySchema">>, Keys}, 
+     {<<"Projection">>, 
+            [{<<"ProjectionType">>, projection(Projection)}]}].
+
+-spec attr_defs(list())  -> json(). 
+
+attr_defs(Attrs) 
+    when is_list(Attrs) ->
+    [attr_type(X, Y) || {X, Y} <- Attrs].
+
+-spec attr_type(binary(), type()) -> json(). 
+
+attr_type(AttrName, AttrType)
+    when is_binary(AttrName), 
+         is_atom(AttrType) ->
+    [{<<"AttributeName">>, AttrName},
+     {<<"AttributeType">>, type(AttrType)}]. 
 
 %%% Create table. Use key_type/2 or key_type/4 as key.
+-spec create_table(tablename(), key_json(), json_parameters(), pos_integer(), pos_integer()) -> json_reply(). 
 
--spec create_table(tablename(), key_json(), pos_integer(), pos_integer()) -> json_reply().
+create_table(Name, Keys, Attrs, ReadsPerSec, WritesPerSec) 
+  when is_binary(Name),
+       is_list(Keys),
+       is_integer(ReadsPerSec),
+       is_integer(WritesPerSec) ->
+    JSON = [{<<"AttributeDefinitions">>, attr_defs(Attrs)},
+            {<<"TableName">>, Name},
+            {<<"KeySchema">>, Keys},
+            {<<"ProvisionedThroughput">>, [{<<"ReadCapacityUnits">>, ReadsPerSec},
+                                           {<<"WriteCapacityUnits">>, WritesPerSec}]}],
+    request(?TG_CREATE_TABLE, JSON).
+
+-spec create_table(tablename(), key_json(), json_parameters(), 
+                                [index_json()], pos_integer(), pos_integer()) -> json_reply().
  
-create_table(Name, Keys, ReadsPerSec, WritesPerSec) 
+create_table(Name, Keys, Attrs, SecondaryIndexes, ReadsPerSec, WritesPerSec) 
   when is_binary(Name),
        is_list(Keys),
        is_integer(ReadsPerSec),
        is_integer(WritesPerSec) ->
     JSON = [{<<"TableName">>, Name},
             {<<"KeySchema">>, Keys},
+            {<<"AttributeDefinitions">>, attr_defs(Attrs)},
+            {<<"LocalSecondaryIndexes">>, SecondaryIndexes},
             {<<"ProvisionedThroughput">>, [{<<"ReadCapacityUnits">>, ReadsPerSec},
                                            {<<"WriteCapacityUnits">>, WritesPerSec}]}],
     request(?TG_CREATE_TABLE, JSON).
@@ -375,12 +415,27 @@ batch_get(Name, KeyList)
                 [{Name, [{<<"Keys">>, KeyList}]}]}],
     request(?TG_BATCH_GET_ITEM, JSON).
 
--spec batch_key_value(binary(), type()) -> json().
+-spec batch_key_value(binary(), binary(), type()) -> json().
 
-batch_key_value(HashKeyValue, HashKeyType)
+batch_key_value(HashKeyName, HashKeyValue, HashKeyType)
   when is_binary(HashKeyValue),
+       is_binary(HashKeyName), 
        is_atom(HashKeyType) ->
-    [{<<"HashKeyElement">>, [{type(HashKeyType), HashKeyValue}]}].
+    [{HashKeyName, [{type(HashKeyType), HashKeyValue}]}].
+
+-spec batch_key_value(binary(), binary(), type(), 
+                        binary(), binary(), type()) -> json().
+
+batch_key_value(HashKeyName, HashKeyValue, HashKeyType, 
+                    RangeKeyName, RangeKeyValue, RangeKeyType) 
+    when is_binary(HashKeyValue), 
+         is_binary(HashKeyName),
+         is_atom(HashKeyType), 
+         is_binary(RangeKeyName), 
+         is_binary(RangeKeyValue), 
+         is_atom(RangeKeyType) ->
+    [{HashKeyName, [{type(HashKeyType), HashKeyValue}]}, 
+        {RangeKeyName, [{type(RangeKeyType), RangeKeyValue}]}].
 
 %%% Fetch all item attributes from table using a condition.
 
@@ -425,26 +480,56 @@ range_key_condition({Condition, RangeKeyType, RangeKeyValues})
 
 %%% Query a table
 
--spec q(tablename(), key_value(), json_parameters()) -> json_reply().
+-spec q(tablename(), binary(), key_value(), json_parameters()) -> json_reply().
 
-q(Name, HashKey, Parameters) ->
-    q(Name, HashKey, Parameters, 'none').
+q(Name, HashKeyName, HashKey, Parameters) ->
+    q(Name, HashKeyName, HashKey, Parameters, 'none').
 
 %% Query a table with pagination
 
--spec q(tablename(), key_value(), json_parameters(), json() | 'none') -> json_reply().
+-spec q(tablename(), binary(), key_value(), json_parameters(), json() | 'none') -> json_reply().
 
-q(Name, {HashKeyValue, HashKeyType}, Parameters, StartKey)
+q(Name, HashKeyName, {HashKeyValue, HashKeyType}, Parameters, StartKey)
   when is_binary(Name),
+       is_binary(HashKeyName), 
        is_binary(HashKeyValue),
        is_atom(HashKeyType),
        is_list(Parameters) ->
     JSON = [{<<"TableName">>, Name},
-            {<<"HashKeyValue">>, [{type(HashKeyType), HashKeyValue}]}]
+            {<<"KeyConditions">>, 
+                [{HashKeyName, 
+                    [{<<"AttributeValueList">>, 
+                        [[{type(HashKeyType), HashKeyValue}]]}, 
+                     {<<"ComparisonOperator">>, <<"EQ">>}]}]}]
 	++ Parameters
 	++ start_key(StartKey),
     request(?TG_QUERY, JSON).
 
+%% Query a table with secondary indexes
+-spec q(tablename(), binary(), key_value(), binary(), [key_value()], 
+                                                json_parameters(), json() | 'none') -> json_reply().
+
+q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, Parameters, StartKey) 
+    when is_binary(Name), 
+         is_binary(HashKeyValue),
+         is_atom(HashKeyType),
+         is_list(IndexKeys),
+         is_list(Parameters) ->
+    JSON = [{<<"TableName">>, Name}, 
+            {<<"IndexName">>, <<IndexName/binary, "_index">>},
+            {<<"KeyConditions">>, 
+                [{IndexName, 
+                    [{<<"AttributeValueList">>, 
+                        [ [{type(T), V}] || {V, T} <- IndexKeys ]}, 
+                     {<<"ComparisonOperator">>, <<"EQ">>}]}, 
+                 {HashKeyName, 
+                    [{<<"AttributeValueList">>, 
+                        [[{type(HashKeyType), HashKeyValue}]]},
+                     {<<"ComparisonOperator">>, <<"EQ">>}]}]}]
+    ++ Parameters
+    ++ start_key(StartKey),
+    request(?TG_QUERY, JSON).
+                         
 %%% Scan a table
 
 -spec scan(tablename(), json_parameters()) -> json_reply().
@@ -521,6 +606,12 @@ returns('updated_new') -> <<"UPDATED_NEW">>.
 update_action('put') -> <<"PUT">>;
 update_action('add') -> <<"ADD">>;
 update_action('delete') -> <<"DELETE">>.
+
+-spec projection(projection()) -> binary().
+
+projection('keys_only') -> <<"KEYS_ONLY">>;
+projection('include') -> <<"INCLUDE">>;
+projection('all') -> <<"ALL">>.
      
 -spec request(string(), json()) -> json_reply().
 
