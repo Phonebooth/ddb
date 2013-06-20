@@ -617,7 +617,7 @@ projection('all') -> <<"ALL">>.
 
 request(Target, JSON) ->
     Body = jsx:term_to_json(JSON),
-    ok = lager:debug([{component, ddb}], "REQUEST BODY ~n~p", [Body]),
+    ok = lager:debug([{component, ddb}], "REQUEST ~n~p", [Body]),
     Headers = headers(Target, Body),
     Opts = [{'response_format', 'binary'}],
     F = fun() -> ibrowse:send_req(?DDB_ENDPOINT, [{'Content-type', ?CONTENT_TYPE} | Headers], 'post', Body, Opts) end,
@@ -627,6 +627,7 @@ request(Target, JSON) ->
 	    ddb:credentials(Key, Secret, Token),
 	    request(Target, JSON);
 	Else ->
+        ok = lager:debug([{component, ddb}], "RESPONSE ~n~p", [Body]),
 	    Else
     end.
 
