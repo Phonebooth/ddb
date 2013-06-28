@@ -60,10 +60,10 @@ retry(F, Max, N, H)
 		    case proplists:get_value(<<"__type">>, JSON) of
 			<<"com.amazonaws.dynamodb.v20111205#ProvisionedThroughputExceededException">> ->
 			    ok = lager:warning([{component, ddb}], "Got client error (~s) ~p, retrying...", [Code, Body]),
-			    retry(F, Max, N + 1, H);
+                {'error', 'throughput_exceeded'};
 			<<"com.amazonaws.dynamodb.v20111205#ThrottlingException">> ->
 			    ok = lager:warning([{component, ddb}], "Got client error (~s) ~p, retrying...", [Code, Body]),
-			    retry(F, Max, N + 1, H);
+                {'error', 'throttling_exception'};
 			<<"com.amazon.coral.service#ExpiredTokenException">> ->
 			    ok = lager:warning([{component, ddb}], "Got client error (~s) ~p, expired token...", [Code, Body]),
 			    {'error', 'expired_token'};
@@ -78,10 +78,10 @@ retry(F, Max, N, H)
 	    end;
 	{'ok', Code, _, Body} ->
 	    ok = lager:warning([{component, ddb}], "Unexpected response (~s) ~p, retrying...", [Code, Body]),
-	    retry(F, Max, N + 1, H);
+	    {'error', 'unexpected_response'};
 	{'error', Error} ->
 	    ok = lager:debug([{component, ddb}], "Got ~p retrying...", [Error]),
-	    retry(F, Max, N + 1, H)
+	    {'error', Error}
     end.
 
 -spec backoff(non_neg_integer()) -> 'ok'.
