@@ -59,28 +59,28 @@ retry(F, Max, N, H)
 		    JSON = jsx:json_to_term(Body),
 		    case proplists:get_value(<<"__type">>, JSON) of
 			<<"com.amazonaws.dynamodb.v20111205#ProvisionedThroughputExceededException">> ->
-			    ok = lager:warning([{component, ddb}], "Got client error (~s) ~p, retrying...", [Code, Body]),
+			    ok = lager:warning([{component, ddb}], "Provisioned capacity exceeded (~s) ~p", [Code, Body]),
                 {'error', 'throughput_exceeded'};
 			<<"com.amazonaws.dynamodb.v20111205#ThrottlingException">> ->
-			    ok = lager:warning([{component, ddb}], "Got client error (~s) ~p, retrying...", [Code, Body]),
+			    ok = lager:warning([{component, ddb}], "Request was throttled (~s) ~p", [Code, Body]),
                 {'error', 'throttling_exception'};
 			<<"com.amazon.coral.service#ExpiredTokenException">> ->
-			    ok = lager:warning([{component, ddb}], "Got client error (~s) ~p, expired token...", [Code, Body]),
+			    ok = lager:warning([{component, ddb}], "Token has expired (~s) ~p", [Code, Body]),
 			    {'error', 'expired_token'};
 			<<"com.amazonaws.dynamodb.v20111205#ConditionalCheckFailedException">> ->
 			    %% This is expected in some use cases, so just trace at info level
-			    ok = lager:info([{component, ddb}], "Got client error (~s) ~p, aborting...", [Code, Body]),
+			    ok = lager:info([{component, ddb}], "Got client error (~s) ~p", [Code, Body]),
 			    {'error', H(Body)};
 			_ ->
-			    ok = lager:error([{component, ddb}], "Got client error (~s) ~p, aborting...", [Code, Body]),
+			    ok = lager:error([{component, ddb}], "Got client error (~s) ~p", [Code, Body]),
 			    {'error', H(Body)}
 		    end
 	    end;
 	{'ok', Code, _, Body} ->
-	    ok = lager:warning([{component, ddb}], "Unexpected response (~s) ~p, retrying...", [Code, Body]),
+	    ok = lager:warning([{component, ddb}], "Unexpected response (~s) ~p", [Code, Body]),
 	    {'error', 'unexpected_response'};
 	{'error', Error} ->
-	    ok = lager:debug([{component, ddb}], "Got ~p retrying...", [Error]),
+	    ok = lager:debug([{component, ddb}], "Unexpected error ~p", [Error]),
 	    {'error', Error}
     end.
 

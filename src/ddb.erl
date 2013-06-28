@@ -45,7 +45,7 @@
 -define(DDB_AMZ_PREFIX, "x-amz-").
 
 -define(SIGNATURE_METHOD, "HmacSHA1").
--define(MAX_RETRIES, 0).
+-define(MAX_RETRIES, 1).
 
 %%% Request headers
 
@@ -627,7 +627,7 @@ request(Target, JSON) ->
 	    ddb:credentials(Key, Secret, Token),
 	    request(Target, JSON);
 	Else ->
-        ok = lager:debug([{component, ddb}], "RESPONSE ~n~p", [Body]),
+        ok = lager:debug([{component, ddb}], "RESPONSE ~n~p", [Else]),
 	    Else
     end.
 
