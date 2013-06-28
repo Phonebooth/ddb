@@ -58,16 +58,16 @@ retry(F, Max, N, H)
 		true ->
 		    JSON = jsx:json_to_term(Body),
 		    case proplists:get_value(<<"__type">>, JSON) of
-			<<"com.amazonaws.dynamodb.v20111205#ProvisionedThroughputExceededException">> ->
+			<<"com.amazonaws.dynamodb.v20120810#ProvisionedThroughputExceededException">> ->
 			    ok = lager:warning([{component, ddb}], "Provisioned capacity exceeded (~s) ~p", [Code, Body]),
                 {'error', 'throughput_exceeded'};
-			<<"com.amazonaws.dynamodb.v20111205#ThrottlingException">> ->
+			<<"com.amazonaws.dynamodb.v20120810#ThrottlingException">> ->
 			    ok = lager:warning([{component, ddb}], "Request was throttled (~s) ~p", [Code, Body]),
                 {'error', 'throttling_exception'};
 			<<"com.amazon.coral.service#ExpiredTokenException">> ->
 			    ok = lager:warning([{component, ddb}], "Token has expired (~s) ~p", [Code, Body]),
 			    {'error', 'expired_token'};
-			<<"com.amazonaws.dynamodb.v20111205#ConditionalCheckFailedException">> ->
+			<<"com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException">> ->
 			    %% This is expected in some use cases, so just trace at info level
 			    ok = lager:info([{component, ddb}], "Got client error (~s) ~p", [Code, Body]),
 			    {'error', H(Body)};
