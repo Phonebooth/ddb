@@ -35,8 +35,9 @@
          cond_delete/3, cond_delete/4,
          now/0, find/3, find/4,
 	     q/4, q/5, q/7,
-         batch_get/2, batch_key_value/3, 
-         batch_put/2, batch_delete/2, 
+         batch_get/2, batch_key_value/3, batch_get_unprocessed/2, 
+         batch_put/2, batch_put_unprocessed/2, 
+         batch_delete/2, batch_delete_unprocessed/2,
 	     scan/2, scan/3, batch_key_value/6,
 	     range_key_condition/1, secondary_index/3]).
 
@@ -257,6 +258,12 @@ batch_put(Name, Items)
             }],
     request(?TG_BATCH_PUT_ITEM, JSON).
 
+-spec batch_put_unprocessed(tablename(), json()) -> json_reply().
+
+batch_put_unprocessed(_Name, Unprocessed) ->
+    JSON = [{<<"RequestItems">>, Unprocessed}], 
+    request(?TG_BATCH_PUT_ITEM, JSON).
+
 %%% Conditionally put item attributes into table
 
 -spec cond_put(tablename(), [put_attr()], update_cond()) -> json_reply().
@@ -381,6 +388,14 @@ batch_delete(Name, Keys)
                 }]
             }],
     request(?TG_BATCH_DELETE_ITEM, JSON).
+
+%% delete unprocessed keys
+
+-spec batch_delete_unprocessed(tablename(), json()) -> json_reply().
+
+batch_delete_unprocessed(_Name, Unprocessed) ->
+    JSON = [{<<"RequestItems">>, Unprocessed}],
+    request(?TG_BATCH_DELETE_ITEM, JSON).
     
 %%% Fetch all item attributes from table.
 
@@ -413,6 +428,12 @@ batch_get(Name, KeyList)
          is_list(KeyList) ->
     JSON = [{<<"RequestItems">>, 
                 [{Name, [{<<"Keys">>, KeyList}]}]}],
+    request(?TG_BATCH_GET_ITEM, JSON).
+
+-spec batch_get_unprocessed(tablename(), json()) -> json_reply().
+
+batch_get_unprocessed(_Name, Unprocessed) ->
+    JSON = [{<<"RequestItems">>, Unprocessed}], 
     request(?TG_BATCH_GET_ITEM, JSON).
 
 -spec batch_key_value(binary(), binary(), type()) -> json().
