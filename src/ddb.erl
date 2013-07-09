@@ -41,6 +41,8 @@
 	     scan/2, scan/3, batch_key_value/6,
 	     range_key_condition/1, secondary_index/3]).
 
+-compile(nowarn_deprecated_function).
+
 -define(DDB_DOMAIN, "dynamodb.us-east-1.amazonaws.com").
 -define(DDB_ENDPOINT, "https://" ++ ?DDB_DOMAIN ++ "/").
 -define(DDB_AMZ_PREFIX, "x-amz-").

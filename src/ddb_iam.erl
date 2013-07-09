@@ -25,6 +25,8 @@
 
 -export([credentials/2, token/1]).
 
+-compile(nowarn_deprecated_function).
+
 -include_lib("ibrowse/include/ibrowse.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
