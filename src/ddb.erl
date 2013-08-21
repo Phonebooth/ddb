@@ -34,7 +34,7 @@
          cond_update/4, cond_update/5,
          cond_delete/3, cond_delete/4,
          now/0, find/3, find/4,
-	     q/4, q/5, q/7,
+	     q/4, q/5, q/7, q/8,
          batch_get/2, batch_key_value/3, batch_get_unprocessed/2, 
          batch_put/2, batch_put_unprocessed/2, 
          batch_delete/2, batch_delete_unprocessed/2,
@@ -83,7 +83,7 @@
 
 -type tablename() :: binary().
 -type type() :: 'number' | 'string' | ['number'] | ['string'].
--type condition() :: 'between' | 'equal'. % TBD implement others
+-type condition() :: 'between' | 'equal' | 'lte' | 'lt' | 'gte' | 'gt' | 'begins_with' . % TBD implement others
 -type key_value() :: {binary(), type()}.
 -type find_cond() :: {condition(), type(), [_]}.
 -type json() :: [_].
@@ -532,7 +532,10 @@ q(Name, HashKeyName, {HashKeyValue, HashKeyType}, Parameters, StartKey)
 -spec q(tablename(), binary(), key_value(), binary(), [key_value()], 
                                                 json_parameters(), json() | 'none') -> json_reply().
 
-q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, Parameters, StartKey) 
+q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, Parameters, StartKey) ->
+    q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, 'equal', Parameters, StartKey).
+
+q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, IndexComparisonOp, Parameters, StartKey)
     when is_binary(Name), 
          is_binary(HashKeyValue),
          is_atom(HashKeyType),
@@ -544,7 +547,7 @@ q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, Paramete
                 [{IndexName, 
                     [{<<"AttributeValueList">>, 
                         [ [{type(T), V}] || {V, T} <- IndexKeys ]}, 
-                     {<<"ComparisonOperator">>, <<"EQ">>}]}, 
+                     {<<"ComparisonOperator">>, condition(IndexComparisonOp)}]}, 
                  {HashKeyName, 
                     [{<<"AttributeValueList">>, 
                         [[{type(HashKeyType), HashKeyValue}]]},
@@ -552,7 +555,8 @@ q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, Paramete
     ++ Parameters
     ++ start_key(StartKey),
     request(?TG_QUERY, JSON).
-                         
+
+
 %%% Scan a table
 
 -spec scan(tablename(), json_parameters()) -> json_reply().
@@ -635,7 +639,16 @@ update_action('delete') -> <<"DELETE">>.
 projection('keys_only') -> <<"KEYS_ONLY">>;
 projection('include') -> <<"INCLUDE">>;
 projection('all') -> <<"ALL">>.
-     
+
+-spec condition(condition()) -> binary().
+condition('equal') -> <<"EQ">>;
+condition('lte') -> <<"LE">>;
+condition('lt') -> <<"LT">>;
+condition('gt') -> <<"GT">>;
+condition('gte') -> <<"GE">>;
+condition('begins_with') -> <<"BEGINS_WITH">>;
+condition('between') -> <<"BETWEEN">>.
+
 -spec request(string(), json()) -> json_reply().
 
 request(Target, JSON) ->
