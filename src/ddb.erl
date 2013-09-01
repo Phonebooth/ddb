@@ -106,7 +106,9 @@
 credentials(AccessKeyId, SecretAccessKey, SessionToken) ->
     'ok' = application:set_env('ddb', 'accesskeyid', AccessKeyId),
     'ok' = application:set_env('ddb', 'secretaccesskey', SecretAccessKey),
-    'ok' = application:set_env('ddb', 'sessiontoken', SessionToken).
+    'ok' = application:set_env('ddb', 'sessiontoken', SessionToken), 
+    %% set parameters for ibrowse specific to the dynamo server
+    ibrowse:set_dest(?DDB_DOMAIN, 443, [{max_sessions, 5}, {max_pipeline_size, 25}]).
 
 %%% Retrieve stored credentials.
 
@@ -655,7 +657,7 @@ request(Target, JSON) ->
     Body = jsx:term_to_json(JSON),
     ok = lager:debug([{component, ddb}], "REQUEST ~n~p", [Body]),
     Headers = headers(Target, Body),
-    Opts = [{'response_format', 'binary'}],
+    Opts = [{'response_format', 'binary'}, {'pool_name', 'ddb'}],
     F = fun() -> ibrowse:send_req(?DDB_ENDPOINT, [{'Content-type', ?CONTENT_TYPE} | Headers], 'post', Body, Opts) end,
     case ddb_aws:retry(F, ?MAX_RETRIES, fun jsx:json_to_term/1) of
 	{'error', 'expired_token'} ->
