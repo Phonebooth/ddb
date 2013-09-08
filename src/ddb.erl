@@ -58,6 +58,7 @@
 -define(TOKEN_HEADER, "x-amz-security-token").
 -define(TARGET_HEADER, "X-Amz-Target").
 -define(CONTENT_TYPE_HEADER, "Content-Type").
+-define(CONNECTION_HEADER, "connection").
 
 -define(CONTENT_TYPE, "application/x-amz-json-1.0").
 
@@ -108,7 +109,7 @@ credentials(AccessKeyId, SecretAccessKey, SessionToken) ->
     'ok' = application:set_env('ddb', 'secretaccesskey', SecretAccessKey),
     'ok' = application:set_env('ddb', 'sessiontoken', SessionToken), 
     %% set parameters for ibrowse specific to the dynamo server
-    ibrowse:set_dest(?DDB_DOMAIN, 443, [{max_sessions, 5}, {max_pipeline_size, 25}]).
+    ibrowse:set_dest(?DDB_DOMAIN, 443, [{max_sessions, 10}, {max_pipeline_size, 1}]).
 
 %%% Retrieve stored credentials.
 
@@ -677,6 +678,7 @@ headers(Target, Body) ->
     Headers = [{?DATE_HEADER, Date},
                {?TARGET_HEADER, Target},
                {?TOKEN_HEADER, SessionToken},
+               {?CONNECTION_HEADER, "Keep-Alive"},
                {?CONTENT_TYPE_HEADER, ?CONTENT_TYPE}],
     Authorization = authorization(AccessKeyId, SecretAccessKey, Headers, Body),
     [{?AUTHORIZATION_HEADER, Authorization}|Headers].
