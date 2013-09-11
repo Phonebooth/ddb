@@ -109,7 +109,7 @@ credentials(AccessKeyId, SecretAccessKey, SessionToken) ->
     'ok' = application:set_env('ddb', 'secretaccesskey', SecretAccessKey),
     'ok' = application:set_env('ddb', 'sessiontoken', SessionToken), 
     %% set parameters for ibrowse specific to the dynamo server
-    ibrowse:set_dest(?DDB_DOMAIN, 443, [{max_sessions, 10}, {max_pipeline_size, 1}]).
+    ibrowse:set_dest(?DDB_DOMAIN, 443, [{max_sessions, 50}, {max_pipeline_size, 1}]).
 
 %%% Retrieve stored credentials.
 
