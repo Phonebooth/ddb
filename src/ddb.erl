@@ -107,9 +107,7 @@
 credentials(AccessKeyId, SecretAccessKey, SessionToken) ->
     'ok' = application:set_env('ddb', 'accesskeyid', AccessKeyId),
     'ok' = application:set_env('ddb', 'secretaccesskey', SecretAccessKey),
-    'ok' = application:set_env('ddb', 'sessiontoken', SessionToken), 
-    %% set parameters for ibrowse specific to the dynamo server
-    ibrowse:set_dest(?DDB_DOMAIN, 443, [{max_sessions, 50}, {max_pipeline_size, 1}]).
+    'ok' = application:set_env('ddb', 'sessiontoken', SessionToken).
 
 %%% Retrieve stored credentials.
 
@@ -390,8 +388,8 @@ batch_delete(Name, Keys)
                 [{Name, 
                     [[{<<"DeleteRequest">>, 
                         [{<<"Key">>, K}]}] || K <- Keys]
-                }]
-            }],
+                }]},
+            {<<"ReturnConsumedCapacity">>, <<"TOTAL">>}],
     request(?TG_BATCH_DELETE_ITEM, JSON).
 
 %% delete unprocessed keys
@@ -432,7 +430,8 @@ batch_get(Name, KeyList)
     when is_binary(Name),
          is_list(KeyList) ->
     JSON = [{<<"RequestItems">>, 
-                [{Name, [{<<"Keys">>, KeyList}]}]}],
+                [{Name, [{<<"Keys">>, KeyList}]}]}, 
+            {<<"ReturnConsumedCapacity">>, <<"TOTAL">>}],
     request(?TG_BATCH_GET_ITEM, JSON).
 
 -spec batch_get_unprocessed(tablename(), json()) -> json_reply().
@@ -522,6 +521,7 @@ q(Name, HashKeyName, {HashKeyValue, HashKeyType}, Parameters, StartKey)
        is_atom(HashKeyType),
        is_list(Parameters) ->
     JSON = [{<<"TableName">>, Name},
+            {<<"ReturnConsumedCapacity">>, <<"TOTAL">>},
             {<<"KeyConditions">>, 
                 [{HashKeyName, 
                     [{<<"AttributeValueList">>, 
@@ -545,6 +545,7 @@ q(Name, HashKeyName, {HashKeyValue, HashKeyType}, IndexName, IndexKeys, IndexCom
          is_list(IndexKeys),
          is_list(Parameters) ->
     JSON = [{<<"TableName">>, Name}, 
+            {<<"ReturnConsumedCapacity">>, <<"TOTAL">>},
             {<<"IndexName">>, <<IndexName/binary, "_index">>},
             {<<"KeyConditions">>, 
                 [{IndexName, 
