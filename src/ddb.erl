@@ -659,7 +659,7 @@ request(Target, JSON) ->
     Body = jsx:term_to_json(JSON),
     ok = lager:debug([{component, ddb}], "REQUEST ~n~p", [Body]),
     Headers = headers(Target, Body),
-    Opts = [{'response_format', 'binary'}, {'pool_name', 'ddb'}],
+    Opts = [{'response_format', 'binary'}, {'pool_name', 'ddb'}, {'connect_timeout', connect_timeout()}],
     F = fun() -> ibrowse:send_req(?DDB_ENDPOINT, [{'Content-type', ?CONTENT_TYPE} | Headers], 'post', Body, Opts) end,
     case ddb_aws:retry(F, ?MAX_RETRIES, fun jsx:json_to_term/1) of
 	{'error', 'expired_token'} ->
@@ -712,3 +712,9 @@ now() ->
     Time = calendar:local_time(),
     Seconds = calendar:datetime_to_gregorian_seconds(Time),
     Seconds - 62167219200. % Unix time
+
+connect_timeout() ->
+    case application:get_env(ddb, connect_timeout) of
+        {ok, Val} -> Val;
+        _ -> 500
+    end.
