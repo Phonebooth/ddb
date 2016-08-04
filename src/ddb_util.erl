@@ -72,7 +72,7 @@ first([{value, _} = R | _]) -> R.
 %% @end
 -spec epoch() -> integer().
 epoch() ->
-    {MS, S, _US} = now(),
+    {MS, S, _US} = os:timestamp(),
     MS * 1000000 + S.
 
 %% @doc Generate the number of seconds since Epoch to `DateTime'
