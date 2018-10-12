@@ -95,7 +95,7 @@ request(Action, Endpoint, Duration) ->
     CanonicalString = mochiweb_util:urlencode(lists:sort(Args)),
     #url{host=Host, path=Path} = ibrowse_lib:parse_url(Endpoint),
     S = ["POST", $\n, Host, $\n, Path, $\n, CanonicalString],
-    Signature = base64:encode_to_string(crypto:sha_mac(SecretAccessKey, S)),
+    Signature = base64:encode_to_string(crypto:hmac(sha, SecretAccessKey, S)),
     Args1 = [{"Signature", Signature}|Args],
     Body = iolist_to_binary(mochiweb_util:urlencode(lists:sort(Args1))), 
     F = fun() -> ibrowse:send_req(Endpoint, [{'Content-type', ?MIME_TYPE}], 'post', Body, []) end,
