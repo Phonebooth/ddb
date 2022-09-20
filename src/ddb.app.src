@@ -9,7 +9,7 @@
   {applications, [
                   kernel,
                   stdlib,
-                  lager,
+                  lumber,
                   crypto,
                   ssl,
                   ibrowse

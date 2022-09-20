@@ -27,6 +27,8 @@
 
 -define(DATE_FMT, "~4.10.0b-~2.10.0b-~2.10.0bT~2.10.0b:~2.10.0b:~2.10.0b.000Z").
 
+-include_lib("lumber/include/lumber.hrl").
+
 -spec retry(function(), non_neg_integer(), function()) -> {'ok', _} | {'error', _}.
 
 retry(F, Max, H) 
@@ -38,7 +40,7 @@ retry(F, Max, H)
 
 retry(_, Max, N, _) 
   when Max == N ->
-    ok = lager:error([{component, ddb}], "Maximum retries (~p) reached, aborting...", [Max]),
+    ?CallFailed("Maximum retries (~p) reached, aborting...", [Max]),
     {'error', 'maximum_retries_reached'};
 
 retry(F, Max, N, H) 
@@ -53,34 +55,34 @@ retry(F, Max, N, H)
         {ok, Code, _, Body} when Code >= "400" andalso Code < "500" ->
 	    case jsx:is_json(Body) of
 		false ->
-		    ok = lager:error([{component, ddb}], "Got client error (~s) ~p, aborting...", [Code, Body]),
+		    ?CallFailed("Got client error (~s) ~p, aborting...", [Code, Body]),
 		    {'error', H(Body)};
 		true ->
 		    JSON = jsx:json_to_term(Body),
 		    case proplists:get_value(<<"__type">>, JSON) of
 			<<"com.amazonaws.dynamodb.v20120810#ProvisionedThroughputExceededException">> ->
-			    ok = lager:debug([{component, ddb}], "Provisioned capacity exceeded (~s) ~p", [Code, Body]),
+			    ?CallFailed("Provisioned capacity exceeded (~s) ~p", [Code, Body]),
                 {'error', 'throughput_exceeded'};
 			<<"com.amazonaws.dynamodb.v20120810#ThrottlingException">> ->
-			    ok = lager:debug([{component, ddb}], "Request was throttled (~s) ~p", [Code, Body]),
+			    ?TraceIt("Request was throttled (~s) ~p", [Code, Body]),
                 {'error', 'throttling_exception'};
 			<<"com.amazon.coral.service#ExpiredTokenException">> ->
-			    ok = lager:debug([{component, ddb}], "Token has expired (~s) ~p", [Code, Body]),
+			    ?TraceIt("Token has expired (~s) ~p", [Code, Body]),
 			    {'error', 'expired_token'};
 			<<"com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException">> ->
 			    %% This is expected in some use cases, so just trace at info level
-			    ok = lager:info([{component, ddb}], "Got client error (~s) ~p", [Code, Body]),
+			    ?Fyi("Got client error (~s) ~p", [Code, Body]),
 			    {'error', H(Body)};
 			_ ->
-			    ok = lager:error([{component, ddb}], "Got client error (~s) ~p", [Code, Body]),
+			    ?CallFailed("Got client error (~s) ~p", [Code, Body]),
 			    {'error', H(Body)}
 		    end
 	    end;
 	{'ok', Code, _, Body} ->
-	    ok = lager:warning([{component, ddb}], "Unexpected response (~s) ~p", [Code, Body]),
+	    ?CallFailed("Unexpected response (~s) ~p", [Code, Body]),
 	    {'error', 'unexpected_response'};
 	{'error', Error} ->
-	    ok = lager:debug([{component, ddb}], "Unexpected error ~p", [Error]),
+	    ?TraceIt("Unexpected error ~p", [Error]),
 	    {'error', Error}
     end.
 
@@ -91,7 +93,7 @@ backoff(Attempts)
   when is_integer(Attempts) ->
     %% attempt exponential backoff
     Delay = round(crypto:rand_uniform(1, 101) * math:pow(4, Attempts)),
-    ok = lager:debug([{component, ddb}], "Waiting ~bms before retrying", [Delay]),
+    ?TraceIt("Waiting ~bms before retrying", [Delay]),
     timer:sleep(Delay).
 
 -spec timestamp() -> string().

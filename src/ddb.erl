@@ -43,6 +43,8 @@
 
 -compile(nowarn_deprecated_function).
 
+-include_lib("lumber/include/lumber.hrl").
+
 -define(DDB_DOMAIN, "dynamodb.us-east-1.amazonaws.com").
 -define(DDB_ENDPOINT, "https://" ++ ?DDB_DOMAIN ++ "/").
 -define(DDB_AMZ_PREFIX, "x-amz-").
@@ -657,7 +659,7 @@ condition('between') -> <<"BETWEEN">>.
 
 request(Target, JSON) ->
     Body = jsx:term_to_json(JSON),
-    ok = lager:debug([{component, ddb}], "REQUEST ~n~p", [Body]),
+    ok = ?TraceIt("REQUEST ~n~p", [Body]),
     Headers = headers(Target, Body),
     Opts = [{'response_format', 'binary'}, {'pool_name', 'ddb'}, {'connect_timeout', connect_timeout()}],
     F = fun() -> ibrowse:send_req(?DDB_ENDPOINT, [{'Content-type', ?CONTENT_TYPE} | Headers], 'post', Body, Opts) end,
@@ -667,7 +669,7 @@ request(Target, JSON) ->
 	    ddb:credentials(Key, Secret, Token),
 	    request(Target, JSON);
 	Else ->
-        ok = lager:debug([{component, ddb}], "RESPONSE ~n~p", [Else]),
+        ok = ?TraceIt("RESPONSE ~n~p", [Else]),
 	    Else
     end.
 

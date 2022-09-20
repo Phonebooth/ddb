@@ -6,3 +6,4 @@ app.config
 .eunit
 log*
 .rebar
+_build
