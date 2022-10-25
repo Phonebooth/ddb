@@ -4,7 +4,7 @@
   0},
  {<<"jsx">>,
   {git,"git@github.com:Phonebooth/jsx.git",
-       {ref,"e50af6e109cb03bd26acf715cbc77de746507d1d"}},
+       {ref,"35a551a36ef0eaf0de37b967fe3170c9bcd2bae4"}},
   0},
  {<<"lumber">>,
   {git,"git@bitbucket.org:relaypro/lumber.git",

@@ -658,12 +658,12 @@ condition('between') -> <<"BETWEEN">>.
 -spec request(string(), json()) -> json_reply().
 
 request(Target, JSON) ->
-    Body = jsx:term_to_json(JSON),
+    Body = jsx:encode(JSON),
     ok = ?TraceIt("REQUEST ~n~p", [Body]),
     Headers = headers(Target, Body),
     Opts = [{'response_format', 'binary'}, {'pool_name', 'ddb'}, {'connect_timeout', connect_timeout()}],
     F = fun() -> ibrowse:send_req(?DDB_ENDPOINT, [{'Content-type', ?CONTENT_TYPE} | Headers], 'post', Body, Opts) end,
-    case ddb_aws:retry(F, ?MAX_RETRIES, fun jsx:json_to_term/1) of
+    case ddb_aws:retry(F, ?MAX_RETRIES, fun jsx:decode/1) of
 	{'error', 'expired_token'} ->
 	    {ok, Key, Secret, Token} = ddb_iam:token(129600),
 	    ddb:credentials(Key, Secret, Token),
