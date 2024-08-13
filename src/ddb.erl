@@ -44,6 +44,7 @@
 -compile(nowarn_deprecated_function).
 
 -include_lib("lumber/include/lumber.hrl").
+-include_lib("pb2utils/include/pb2utils.hrl").
 
 -define(DDB_DOMAIN, "dynamodb.us-east-1.amazonaws.com").
 -define(DDB_ENDPOINT, "https://" ++ ?DDB_DOMAIN ++ "/").
@@ -697,8 +698,8 @@ authorization(AccessKeyId, SecretAccessKey, Headers, Body) ->
 
 signature(SecretAccessKey, Headers, Body) ->
     StringToSign = lists:flatten(["POST", $\n, "/", $\n, $\n, canonical(Headers), $\n, Body]),
-    BytesToSign = crypto:hash(sha, StringToSign),
-    base64:encode_to_string(binary_to_list(crypto:hmac(sha, SecretAccessKey, BytesToSign))).
+    BytesToSign = ?SHA(StringToSign),
+    base64:encode_to_string(binary_to_list( ?SHA_HMAC(SecretAccessKey, BytesToSign) )).
 
 -spec canonical(proplists:proplist()) -> [_].
 

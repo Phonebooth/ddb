@@ -53,3 +53,7 @@ get-deps:
 
 compile-deps:
 	@$(REBAR) compile
+
+.PHONY: dialyzer
+dialyzer:
+	@$(REBAR) dialyzer
