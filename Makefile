@@ -1,4 +1,4 @@
-REBAR = ./rebar
+REBAR = rebar3
 DIALYZER = dialyzer
 TOUCH = touch
 
@@ -53,3 +53,7 @@ get-deps:
 
 compile-deps:
 	@$(REBAR) compile
+
+.PHONY: dialyzer
+dialyzer:
+	@$(REBAR) dialyzer

@@ -23,7 +23,7 @@
 
 -module(ddb_aws).
 
--export([retry/3, timestamp/0]).
+-export([retry/3, retry/4, timestamp/0]).
 
 -define(DATE_FMT, "~4.10.0b-~2.10.0b-~2.10.0bT~2.10.0b:~2.10.0b:~2.10.0b.000Z").
 
@@ -90,7 +90,7 @@ backoff(0) -> 'ok';
 backoff(Attempts) 
   when is_integer(Attempts) ->
     %% attempt exponential backoff
-    Delay = round(crypto:rand_uniform(1, 101) * math:pow(4, Attempts)),
+    Delay = round(rand:uniform(101) * math:pow(4, Attempts)),
     ok = lager:debug([{component, ddb}], "Waiting ~bms before retrying", [Delay]),
     timer:sleep(Delay).
 
