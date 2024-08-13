@@ -1,0 +1,32 @@
+{"1.2.0",
+[{<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.9">>},1},
+ {<<"ibrowse">>,
+  {git,"git@github.com:Phonebooth/ibrowse.git",
+       {ref,"5b2968c5e83b0a8dcc8b2b89f5eec8bc32bfb431"}},
+  0},
+ {<<"jsx">>,
+  {git,"git@github.com:Phonebooth/jsx.git",
+       {ref,"e50af6e109cb03bd26acf715cbc77de746507d1d"}},
+  0},
+ {<<"lager">>,
+  {git,"git@github.com:erlang-lager/lager.git",
+       {ref,"e6b31784e65b838a10d0a533f4b838da8029e402"}},
+  0},
+ {<<"mochiweb">>,
+  {git,"git@github.com:Phonebooth/mochiweb.git",
+       {ref,"8b7f9c773ae491bd0860698ffaca0f2faa3b4a12"}},
+  0},
+ {<<"pb2utils">>,
+  {git,"git@bitbucket.org:relaypro/pb2utils.git",
+       {ref,"1452f22bf339295748d8218ddc4a173069201607"}},
+  0},
+ {<<"pmod_transform">>,
+  {git,"git@github.com:erlang/pmod_transform.git",
+       {ref,"f96b8b572395581d58fe3dd7c3e61f3f0e8fa6dc"}},
+  0}]}.
+[
+{pkg_hash,[
+ {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>}]},
+{pkg_hash_ext,[
+ {<<"goldrush">>, <<"99CB4128CFFCB3227581E5D4D803D5413FA643F4EB96523F77D9E6937D994CEB">>}]}
+].

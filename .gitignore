@@ -5,3 +5,4 @@ deps/
 app.config
 .eunit
 log*
+_build
