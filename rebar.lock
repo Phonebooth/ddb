@@ -12,7 +12,7 @@
   0},
  {<<"mochiweb">>,
   {git,"git@github.com:Phonebooth/mochiweb.git",
-       {ref,"8b7f9c773ae491bd0860698ffaca0f2faa3b4a12"}},
+       {ref,"23add029ea309b5487f522531bbbeaa3b8067974"}},
   0},
  {<<"pb2utils">>,
   {git,"git@bitbucket.org:relaypro/pb2utils.git",
