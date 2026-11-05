@@ -17,7 +17,7 @@
        {ref,"8b7f9c773ae491bd0860698ffaca0f2faa3b4a12"}},
   0},
  {<<"pb2utils">>,
-  {git,"git@bitbucket.org:relaypro/pb2utils.git",
+  {git,"git@ssh.bitbucket.org:relaypro/pb2utils.git",
        {ref,"1452f22bf339295748d8218ddc4a173069201607"}},
   0},
  {<<"pmod_transform">>,
